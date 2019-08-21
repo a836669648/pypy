@@ -1,0 +1,53 @@
+from selenium import webdriver
+import json
+import time
+
+
+class DouyuSpider:
+    """爬取斗鱼所有正在直播的主播信息"""
+
+    def __init__(self):
+        self.start_url = "https://www.douyu.com/directory/all"
+        self.driver = webdriver.Chrome()
+        self.driver.get(self.start_url)
+
+    def get_content_list(self):
+        """发送请求获取响应"""
+        time.sleep(3)
+        ul_list = self.driver.find_elements_by_xpath('//*[@id="listAll"]/section[2]/div[2]/ul/li')  # s不要忘记
+        content_list = list()
+        for ul in ul_list:
+            item = dict()
+            item["title"] = ul.find_element_by_xpath('.//h3').text  # 没有s
+            item["user_name"] = ul.find_element_by_xpath('.//h2').text
+            item["hot"] = ul.find_element_by_xpath('.//span[@class="DyListCover-hot"][1]').text
+            item["zone"] = ul.find_element_by_xpath('.//span[@class="DyListCover-zone"]').text
+            content_list.append(item)
+        # 在xpath中，最后一个元素不能用[-1]表示，而是应该用[last()]！
+        next_url = self.driver.find_element_by_xpath(
+            '//div[@class="ListFooter"]/ul/li[last()]/span') if self.driver.find_element_by_xpath(
+            '//div[@class="ListFooter"]/ul/li[last()]').get_attribute("aria-disabled") == "false" else None
+        return content_list, next_url
+
+    def save_content_list(self, content_list):
+        """保存数据"""
+        with open("斗鱼爬虫.txt", "a", encoding="utf-8") as f:
+            for content in content_list:
+                f.write(json.dumps(content, ensure_ascii=False, indent=4))
+                f.write("\n")
+
+    def run(self):
+        """实现主要逻辑"""
+        content_list, next_url = self.get_content_list()
+        self.save_content_list(content_list)
+        while next_url is not None:
+            next_url.click()
+            content_list, next_url = self.get_content_list()
+            self.save_content_list(content_list)
+
+
+if __name__ == '__main__':
+    douyu = DouyuSpider()
+    douyu.run()
+
+# Message: stale element reference: element is not attached to the page document，此时需要加入强制等待。
