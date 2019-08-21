@@ -20,7 +20,7 @@ def main():
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_socket.bind(('', 1888))
     while True:
-        print("_"*40)
+        print("_" * 40)
         print("1:发送消息")
         print("2.接收消息")
         num = input("请输入要选择的功能：")
